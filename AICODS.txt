@@ -1,0 +1,467 @@
+
+1st 
+from collections import defaultdict, deque
+
+class Graph:
+    def __init__(self):
+        # Default dictionary to store graph
+        self.graph = defaultdict(list)
+
+    def add_edge(self, u, v):
+        self.graph[u].append(v)
+        self.graph[v].append(u)  # Since it's undirected, add the reverse edge as well.
+
+    def dfs_recursive(self, vertex, visited=None):
+        if visited is None:
+            visited = set()
+        visited.add(vertex)
+        print(vertex, end=' ')
+        for neighbor in self.graph[vertex]:
+            if neighbor not in visited:
+                self.dfs_recursive(neighbor, visited)
+
+    def bfs(self, start):
+        visited = set()  # To keep track of visited nodes
+        queue = deque([start])  # Use deque for an efficient queue implementation
+        visited.add(start)
+
+        while queue:
+            vertex = queue.popleft()  # Pop the front of the queue
+            print(vertex, end=' ')
+
+            # Add all unvisited neighbors to the queue
+            for neighbor in self.graph[vertex]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+                    visited.add(neighbor)
+
+# Example usage:
+g = Graph()
+g.add_edge(0, 1)
+g.add_edge(0, 2)
+g.add_edge(1, 2)
+g.add_edge(2, 3)
+g.add_edge(3, 4)
+
+print("Depth First Search (starting from vertex 0):")
+g.dfs_recursive(0)
+
+print("\nBreadth First Search (starting from vertex 0):")
+g.bfs(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2nd 
+import heapq
+class AStar:
+    def __init__(self, grid, start, goal):
+        self.grid = grid  # 2D grid where 0 = walkable, 1 = blocked
+        self.start = start  # Start position (x, y)
+        self.goal = goal  # Goal position (x, y)
+        self.rows = len(grid)
+        self.cols = len(grid[0])
+
+    def heuristic(self, node):
+        # Manhattan distance heuristic
+        return abs(node[0] - self.goal[0]) + abs(node[1] - self.goal[1])
+
+    def neighbors(self, node):
+        # Return valid neighbors (up, down, left, right)
+        dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Directions: right, down, left, up
+        result = []
+        for d in dirs:
+            neighbor = (node[0] + d[0], node[1] + d[1])
+            if 0 <= neighbor[0] < self.rows and 0 <= neighbor[1] < self.cols and self.grid[neighbor[0]][neighbor[1]] == 0:
+                result.append(neighbor)
+        return result
+
+    def a_star_search(self):
+        # Priority queue to store (f_score, node)
+        open_list = []
+        heapq.heappush(open_list, (0, self.start))
+
+        came_from = {}  # For reconstructing path
+        g_score = {self.start: 0}  # Cost from start to each node
+        f_score = {self.start: self.heuristic(self.start)}  # Estimated cost from start to goal
+
+        while open_list:
+            current = heapq.heappop(open_list)[1]
+
+            # If we reached the goal, reconstruct the path
+            if current == self.goal:
+                return self.reconstruct_path(came_from, current)
+
+            for neighbor in self.neighbors(current):
+                tentative_g_score = g_score[current] + 1  # Distance from current to neighbor is 1
+
+                if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                    # Update the best path to the neighbor
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    f_score[neighbor] = tentative_g_score + self.heuristic(neighbor)
+                    heapq.heappush(open_list, (f_score[neighbor], neighbor))
+
+        return []  # Return empty path if no solution
+
+    def reconstruct_path(self, came_from, current):
+        # Reconstruct path from came_from dictionary
+        total_path = [current]
+        while current in came_from:
+            current = came_from[current]
+            total_path.append(current)
+        return total_path[::-1]  # Reverse path to start from the beginning
+
+# 0 = walkable, 1 = blocked
+grid = [
+    [0, 1, 0, 0, 0],
+    [0, 1, 0, 1, 0],
+    [0, 0, 0, 1, 0],
+    [1, 1, 0, 0, 0],
+    [0, 0, 0, 1, 0]
+]
+
+start = (0, 0)  # Starting position
+goal = (4, 4)   # Goal position
+
+a_star = AStar(grid, start, goal)
+path = a_star.a_star_search()
+
+print("Path from start to goal:", path)
+
+
+
+
+
+
+
+
+3rd
+import math
+MAX_PLAYER = 'X'
+MIN_PLAYER = 'O'
+EMPTY = '_'
+
+class TicTacToe:
+    def __init__(self):
+        # Initialize an empty 3x3 board
+        self.board = [
+            [EMPTY, EMPTY, EMPTY],
+            [EMPTY, EMPTY, EMPTY],
+            [EMPTY, EMPTY, EMPTY]
+        ]
+
+    def is_moves_left(self, board):
+        # Check if there are empty cells left on the board
+        for row in board:
+            if EMPTY in row:
+                return True
+        return False
+
+    def evaluate(self, board):
+        # Check rows, columns, and diagonals for a winner
+        for row in range(3):
+            if board[row][0] == board[row][1] == board[row][2]:
+                if board[row][0] == MAX_PLAYER:
+                    return 10
+                elif board[row][0] == MIN_PLAYER:
+                    return -10
+
+        for col in range(3):
+            if board[0][col] == board[1][col] == board[2][col]:
+                if board[0][col] == MAX_PLAYER:
+                    return 10
+                elif board[0][col] == MIN_PLAYER:
+                    return -10
+
+        if board[0][0] == board[1][1] == board[2][2]:
+            if board[0][0] == MAX_PLAYER:
+                return 10
+            elif board[0][0] == MIN_PLAYER:
+                return -10
+
+        if board[0][2] == board[1][1] == board[2][0]:
+            if board[0][2] == MAX_PLAYER:
+                return 10
+            elif board[0][2] == MIN_PLAYER:
+                return -10
+
+        return 0
+
+    def minimax(self, board, depth, is_maximizing, alpha, beta):
+        score = self.evaluate(board)
+        if score == 10:
+            return score - depth
+        if score == -10:
+            return score + depth
+
+        # If no more moves and no winner (tie)
+        if not self.is_moves_left(board):
+            return 0
+
+        if is_maximizing:
+            best = -math.inf
+            for i in range(3):
+                for j in range(3):
+                    if board[i][j] == EMPTY:
+                        # Make the move
+                        board[i][j] = MAX_PLAYER
+
+                        # Recur and choose the maximum value
+                        best = max(best, self.minimax(board, depth + 1, False, alpha, beta))
+                        board[i][j] = EMPTY
+                        alpha = max(alpha, best)
+                        if beta <= alpha:
+                            break
+            return best
+
+        else:
+            best = math.inf
+            for i in range(3):
+                for j in range(3):
+                    if board[i][j] == EMPTY:
+                        # Make the move
+                        board[i][j] = MIN_PLAYER
+                        best = min(best, self.minimax(board, depth + 1, True, alpha, beta))
+
+                        board[i][j] = EMPTY
+
+                        # Update beta
+                        beta = min(beta, best)
+
+                        # Alpha-Beta Pruning
+                        if beta <= alpha:
+                            break
+            return best
+
+    def find_best_move(self):
+        best_val = -math.inf
+        best_move = (-1, -1)
+
+        # Traverse all cells, evaluate minimax function for each empty cell, and return the best move
+        for i in range(3):
+            for j in range(3):
+                if self.board[i][j] == EMPTY:
+                    # Make the move
+                    self.board[i][j] = MAX_PLAYER
+
+                    # Compute evaluation function for this move
+                    move_val = self.minimax(self.board, 0, False, -math.inf, math.inf)
+
+                    # Undo the move
+                    self.board[i][j] = EMPTY
+
+                    # If the value of the current move is better than the best value, update best move
+                    if move_val > best_val:
+                        best_move = (i, j)
+                        best_val = move_val
+
+        return best_move
+
+    def print_board(self):
+        for row in self.board:
+            print(" | ".join(row))
+            print("-" * 9)
+game = TicTacToe()
+game.board = [
+    ['X', 'O', 'X'],
+    ['O', 'O', '_'],
+    ['_', '_', 'X']
+]
+
+print("Current board:")
+game.print_board()
+
+best_move = game.find_best_move()
+print(f"\nThe best move for 'X' is: {best_move}")
+
+
+4th
+def print_board(board):
+    for row in board:
+        print(" ".join("Q" if col else "." for col in row))
+    print("\n")
+
+def is_safe(board, row, col, n):
+    # Check column
+    for i in range(row):
+        if board[i][col]:
+            return False
+    # Check upper left diagonal
+    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+        if board[i][j]:
+            return False
+    # Check upper right diagonal
+    for i, j in zip(range(row, -1, -1), range(col, n)):
+        if board[i][j]:
+            return False
+    return True
+
+def solve_n_queens_backtracking(board, row, n):
+    if row == n:
+        print_board(board)
+        return True
+
+    found_solution = False
+    for col in range(n):
+        if is_safe(board, row, col, n):
+            board[row][col] = True
+            found_solution = solve_n_queens_backtracking(board, row + 1, n) or found_solution
+            board[row][col] = False  # Backtrack
+    return found_solution
+
+def n_queens_backtracking(n):
+    board = [[False] * n for _ in range(n)]
+    if not solve_n_queens_backtracking(board, 0, n):
+        print("No solution exists.")
+
+# ---------------- BRANCH AND BOUND ----------------
+
+def is_safe_branch_and_bound(row, col, cols, diags1, diags2, n):
+    return not (cols[col] or diags1[row + col] or diags2[row - col + (n - 1)])
+
+def solve_n_queens_branch_and_bound(row, n, cols, diags1, diags2, board):
+    if row == n:
+        print_board(board)
+        return True
+
+    found_solution = False
+    for col in range(n):
+        if is_safe_branch_and_bound(row, col, cols, diags1, diags2, n):
+            board[row][col] = True
+            cols[col] = True
+            diags1[row + col] = True
+            diags2[row - col + (n - 1)] = True
+
+            found_solution = solve_n_queens_branch_and_bound(row + 1, n, cols, diags1, diags2, board) or found_solution
+
+            board[row][col] = False
+            cols[col] = False
+            diags1[row + col] = False
+            diags2[row - col + (n - 1)] = False
+    return found_solution
+
+def n_queens_branch_and_bound(n):
+    board = [[False] * n for _ in range(n)]
+    cols = [False] * n
+    diags1 = [False] * (2 * n - 1)
+    diags2 = [False] * (2 * n - 1)
+    if not solve_n_queens_branch_and_bound(0, n, cols, diags1, diags2, board):
+        print("No solution exists.")
+
+# Example usage:
+print("Backtracking Solution:")
+n_queens_backtracking(4)
+
+print("Branch and Bound Solution:")
+n_queens_branch_and_bound(4)
+
+
+
+
+
+Alg(5th)
+
+
+
+def selection_sort(arr):
+    n = len(arr)
+
+    # Traverse through all array elements
+    for i in range(n):
+        # Find the minimum element in the remaining unsorted array
+        min_index = i
+        for j in range(i+1, n):
+            if arr[j] < arr[min_index]:
+                min_index = j
+
+        # Swap the found minimum element with the first element
+        arr[i], arr[min_index] = arr[min_index], arr[i]
+        print(f"Step {i+1}: {arr}")  # Print the array after each swap
+
+    return arr
+
+# Example usage:
+arr = [64, 25, 12, 22, 11]
+print("Original array:", arr)
+sorted_arr = selection_sort(arr)
+print("Sorted array:", sorted_arr)
+
+
+
+
+
+
+
+Practical chatbot
+Chatbot
+
+
+import nltk
+from nltk.chat.util import Chat, reflections
+import tkinter as tk
+from tkinter import scrolledtext
+
+# Define chatbot responses using pairs
+pairs = [
+    [r"hi|hello|hey", ["Hello! How can I assist you today?", "Hi there! How can I help?"]],
+    [r"how are you?", ["I'm just a bot, but I'm doing fine! How about you?", "I'm a chatbot — always ready to help!"]],
+    [r"(.*)your name?", ["I'm a chatbot, here to assist you."]],
+    [r"bye|goodbye", ["Goodbye! Have a great day!", "Bye! Take care!"]],
+    [r"(.*)", ["I'm not sure how to respond to that. Could you rephrase?"]]
+]
+
+# Create chatbot
+chatbot = Chat(pairs, reflections)
+
+def send_message():
+    user_input = user_entry.get()
+    chat_history.insert(tk.END, f"You: {user_input}\n")
+    response = chatbot.respond(user_input)
+    chat_history.insert(tk.END, f"Bot: {response}\n\n")
+    user_entry.delete(0, tk.END)
+
+# GUI setup
+root = tk.Tk()
+root.title("Simple Chatbot")
+
+chat_history = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=50, height=15)
+chat_history.pack(padx=10, pady=10)
+
+user_entry = tk.Entry(root, width=40)
+user_entry.pack(padx=10, pady=5)
+
+send_button = tk.Button(root, text="Send", command=send_message)
+send_button.pack(pady=5)
+
+root.mainloop()
